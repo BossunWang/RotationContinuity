@@ -112,6 +112,10 @@ def train_one_iteraton(logger, dances_lst,  param, model, optimizer, iteration, 
  
     ###network forward########
     #predict_poses, predict_rotation_matrices,  predict_poses_fix_hip, predict_rotation_matrices_fix_hip= model(gt_poses) #seq_len*joint_num*3
+    if torch.isnan(gt_poses).any():
+        print("gt_poses is NAN")
+        return
+
     predict_poses, predict_rotation_matrices= model(gt_poses) #seq_len*joint_num*3
     
     ####compute loss##########
