@@ -34,8 +34,13 @@ This code will print out the mean, max and std of the errors of different rotati
 
 
 ## 2. Inverse Kinematics
+* Description: \
+A network is given 3D joint positions and is asked to predict the rotations from a canonical “T-pose” to
+the input pose. Predicted rotations are transformed back to joint positions via forward kinematics,
+and the training loss is on the reconstructed joint positions.
 
 ### dataset
+
 The dataset was constructed from a subset of CMU Motion Capture Dataset https://sites.google.com/a/cgspeed.com/cgspeed/motion-capture/daz-friendly-release
 
 We transformed the original motion clips in the bvh form into npy form which contains a L*(3+57*4) array. L is the length of the sequence. 57 is the number of joints. the first three dimensions are the x,y,z position of the root(hip), the rest are the quaternions of the joints in the order defined in the bvh files.

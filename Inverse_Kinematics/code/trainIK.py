@@ -45,7 +45,7 @@ def get_augmented_gt_seq_for_training(dances_lst, target_framerate, min_seq_len=
     random_start_id = np.random.randint(0,dance_quat_seq.shape[0]-random_length)
     
     dance_quat_seq = dance_quat_seq[random_start_id: random_start_id + random_length]
-    
+    # Multiples of 16
     dance_quat_seq = dance_quat_seq[0:int(dance_quat_seq.shape[0]-dance_quat_seq.shape[0]%16)]
     
     stride= int( frame_rate/target_framerate)
@@ -56,8 +56,8 @@ def get_augmented_gt_seq_for_training(dances_lst, target_framerate, min_seq_len=
     seq_len=dance_quat_seq.shape[0]
     dance_quat_seq_cuda = torch.autograd.Variable(torch.FloatTensor(dance_quat_seq).cuda()) #seq_len*(3+joint_num*4)
 
-    #augment the rotation
-    hip_quat_seq_cuda = dance_quat_seq_cuda[:, 3:7]
+    #augment the rotation of root
+    hip_quat_seq_cuda = dance_quat_seq_cuda[:, 3:7]  # root index
     hip_matrix_seq_cuda = tools.compute_rotation_matrix_from_quaternion(hip_quat_seq_cuda)#seq_len*3*3
     
     ##generate a random rotation matrix
@@ -99,14 +99,15 @@ def train_one_iteraton(logger, dances_lst,  param, model, optimizer, iteration, 
     
     optimizer.zero_grad()
     
-    
+    # get random data index, random sequence length, random stride
     gt_hip_pose_quat = get_augmented_gt_seq_for_training(dances_lst, param.target_frame_rate,min_seq_len=16, max_seq_len = 64) #seq_len*(3+joint_num*4)
     seq_len = gt_hip_pose_quat.shape[0]
     gt_quat = gt_hip_pose_quat[:, 3:gt_hip_pose_quat.shape[1]].contiguous().view(-1, 4) #(seq_len*joint_num)*4
     gt_rotation_matrices = tools.compute_rotation_matrix_from_quaternion(gt_quat)#seq_len*3*3
     gt_rotation_matrices = tools.get_44_rotation_matrix_from_33_rotation_matrix(gt_rotation_matrices).view(seq_len,-1,4,4)#seq_len*joint_num*4*4
+
     gt_poses = model.rotation_seq2_pose_seq(gt_rotation_matrices) #seq_len*joint_num*3
-    
+
     #gt_rotation_matrices_fix_hip =torch.cat( (torch.autograd.Variable(torch.eye(4,4).cuda()).view(1,1,4,4).expand(seq_len, 1, 4,4), gt_rotation_matrices[:,1:Joint_num]), 1)
     #gt_poses_fix_hip = model.rotation_seq2_pose_seq(gt_rotation_matrices_fix_hip)
  
